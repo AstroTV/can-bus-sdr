@@ -50,6 +50,17 @@ def frame_to_bits(id, payload):
     # Frame end components
     return stuffed + ['1']*3 + ['1']*7  # CRC delim + ACK + EOF
 
+def plot(df, signal_start, signal_end, can_frame, path):
+        can_id = int(can_frame.split(":")[0][3:],base=16)
+        can_payload = bytes.fromhex(can_frame.split(":")[1])
+        can_bits = frame_to_bits(can_id, can_payload)
+        bitsstring = "".join(can_bits)
+        plt.plot(df['Amplitude'][signal_start:signal_end])
+        plt.title(f"0x{can_id:x} {can_payload.hex()}\n {bitsstring}")
+        plt.xlabel("Time [ms]")
+        plt.ylabel("A [dB]")
+        plt.savefig("plots/" + path[:-3] + "png")
+
 if len(sys.argv) != 2:
     print("Usage: python cut_samples.py <FOLDER WITH CSV>")
     exit(1)
@@ -65,12 +76,9 @@ for path in paths:
     path = folder + "/" + path
 
     # Get the CAN Frame from the first row of the CSV file
-    df = pd.read_csv(path, delimiter=";", nrows=0)
-    can_frame = df.columns[1]
-    can_id = int(can_frame.split(":")[0][3:],base=16)
-    can_payload = bytes.fromhex(can_frame.split(":")[1])
-    can_bits = frame_to_bits(can_id, can_payload)
-    bitsstring = "".join(can_bits)
+    can_frame_df = pd.read_csv(path, delimiter=";", nrows=0)
+    can_frame = can_frame_df.columns[1]
+
 
     # Load the data from CSV file
     df = pd.read_csv(path, delimiter=';', skiprows=[0])
@@ -78,8 +86,6 @@ for path in paths:
     # Calculate the mean and standard deviation of the noise
     noise_mean = df['Amplitude'].mean()
     noise_std = df['Amplitude'].std()
-
-    print(f"Mean: {noise_mean}, Stdev: {noise_std}")
 
     # Define a threshold to detect the signal
     threshold = noise_mean + 4 * noise_std
@@ -94,21 +100,14 @@ for path in paths:
         signal_start = max(0,signal_start - 50)
         signal_end = min(len(df['Amplitude']), signal_end + 50)
 
-        print(f"Signal starts at index: {signal_start}")
-        print(f"Signal ends at index: {signal_end}")
         frame_len = signal_end - signal_start
         if frame_len < 340 or frame_len > 800:
             print(f"Frame length ({frame_len}) not in sanity range - skipping")
             continue
-        plt.plot(df['Amplitude'][signal_start:signal_end])
-        plt.title(f"0x{can_id:x} {can_payload.hex()}\n {bitsstring}")
-        plt.xlabel("Time [ms]")
-        plt.ylabel("A [dB]")
-        plt.show()
-        df["Timestamp"].drop()
-        df["Amplitude"] = df['Amplitude'][signal_start:signal_end]
 
-        df.to_csv("cut/" + path)
+        plot(df, signal_start, signal_end, can_frame, path)
+        export_df = pd.concat([can_frame_df,df.iloc[signal_start:signal_end]])
+        export_df.to_csv("cut/" + path, index=False)
         
     else:
         print("No signal detected above the threshold.")
