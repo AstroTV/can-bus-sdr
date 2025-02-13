@@ -2,6 +2,7 @@ import pandas as pd
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 def plot(values, time_axis, filename, show=False):
@@ -15,14 +16,24 @@ def plot(values, time_axis, filename, show=False):
     plt.close()
 
 def main():
-    if len(sys.argv) != 2 or not sys.argv[1].endswith(".csv"):
+    if len(sys.argv) != 2:# or not sys.argv[1].endswith(".csv"):
         print("Usage: python process_csv.py <example.csv>")
         exit(1)
-    filename = sys.argv[1]
-    ds = pd.read_csv(filename,delimiter=';')
-    values = ds['Amplitude'].to_numpy()
-    timestamps = ds['Timestamp'].to_numpy()
-    median = np.median(values)
+    filenames = []
+    if os.path.isdir(sys.argv[1]):
+         filenames = [sys.argv[1] + "/" + file for file in os.listdir(sys.argv[1]) if file.endswith(".csv")]
+    elif sys.argv[1].endswith(".csv"):
+        filenames = sys.argv[1]
+
+    print(filenames)
+    
+    for filename in filenames:
+        ds = pd.read_csv(filename,delimiter=';', skiprows=[0])
+        values = ds['Amplitude'].to_numpy()
+        timestamps = ds['Timestamp'].to_numpy()
+        median = np.median(values)
+        plot(values,timestamps, filename.split("/")[-1][:-3] + "png")
+    exit(0)
     no_signal_counter = 0
     start_of_frame_indices = []
     end_of_frame_indices = []
