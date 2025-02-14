@@ -55,11 +55,14 @@ def plot(df, signal_start, signal_end, can_frame, path):
         can_payload = bytes.fromhex(can_frame.split(":")[1])
         can_bits = frame_to_bits(can_id, can_payload)
         bitsstring = "".join(can_bits)
+        fig = plt.figure(figsize=(16,12))
         plt.plot(df['Amplitude'][signal_start:signal_end])
         plt.title(f"0x{can_id:x} {can_payload.hex()}\n {bitsstring}")
         plt.xlabel("Time [ms]")
         plt.ylabel("A [dB]")
         plt.savefig("plots/" + path[:-3] + "png")
+        plt.close()
+        del(fig)
 
 if len(sys.argv) != 2:
     print("Usage: python cut_samples.py <FOLDER WITH CSV>")
