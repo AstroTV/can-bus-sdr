@@ -14,6 +14,11 @@ if not sys.argv[1].endswith('.csv'):
     print("Usage: python process_logic_analyser_csv.py <CSV>")
     exit(2)
 
+# Get the CAN frames fromt he top of the CSV files
+can_frames = pd.read_csv("logic_frames.csv")["CAN Frame"]
+print(can_frames)
+
+print(f"Found {len(can_frames)} frames")
 
 df = pd.read_csv(sys.argv[1])
 print(df)
@@ -42,7 +47,10 @@ for i in range(1,length):
         cut_values.append(values[i])
         cut_timestamps.append(timestamps[i])
 
+# Drop the first frame as it is only '1' bits
+frames = frames[1:]
 
+print(f"Found {len(frames)} frames")
 
 for i,frame in enumerate(frames):
     timestamps = frame[0]
@@ -50,18 +58,19 @@ for i,frame in enumerate(frames):
     new_values = [values[0]]
     new_timestamps = [timestamps[0]]
 
-    for i in range(1,len(values)):
+    for j in range(1,len(values)):
         # add the last value very shortly before the next one
-        new_values.append(values[i-1])
-        new_timestamps.append(timestamps[i] - 0.0000001)
-        new_values.append(values[i])
-        new_timestamps.append(timestamps[i])
+        new_values.append(values[j-1])
+        new_timestamps.append(timestamps[j] - 0.0000001)
+        new_values.append(values[j])
+        new_timestamps.append(timestamps[j])
 
     fig = plt.figure(figsize=(16,12))
     plt.plot( new_timestamps, new_values,)
     plt.xlabel("Time [s]")
     plt.ylabel("Logic Value")
-    path = f"plots/logic/{i:04d}.png"
+    plt.title(can_frames[i])
+    path = f"plots/logic/{can_frames[i]}.png"
     plt.savefig(path)
     plt.close()
     del(fig)

@@ -14,6 +14,7 @@ if not os.path.isdir(folder):
     exit(2)
 
 paths = os.listdir(folder)
+print("CAN Frame")
 
 for path in paths:
     path = folder + "/" + path
@@ -22,6 +23,7 @@ for path in paths:
     can_frame_df = pd.read_csv(path, nrows=0)
     can_frame = can_frame_df.columns[1]
     print(can_frame)
+    continue
     with can.Bus(interface='socketcan', channel='can0',) as bus:
         id = int(can_frame.split(":")[0][3:],base=16)
         payload = bytes.fromhex(can_frame.split(":")[1])

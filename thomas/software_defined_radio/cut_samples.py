@@ -15,18 +15,13 @@ def compute_crc(bits):
 
 def bit_stuff(bits):
     stuffed = []
-    count = 0
-    last = None
     for bit in bits:
+        if len(stuffed) > 4:
+            if stuffed[-5:] == ['0','0','0','0','0']:
+                stuffed.append('1')
+            elif stuffed[-5:] == ['1','1','1','1','1']:
+                stuffed.append('0')
         stuffed.append(bit)
-        if bit == last:
-            count +=1
-            if count == 5:
-                stuffed.append('0' if bit == '1' else '1')
-                count = 0
-        else:
-            count = 1
-            last = bit
     return stuffed
 
 def frame_to_bits(id, payload):
@@ -39,11 +34,9 @@ def frame_to_bits(id, payload):
         ''.join(f"{b:08b}" for b in payload)  # Data bytes
     ]
     bits = ''.join(base)
-    
     # Compute CRC and append
     crc = compute_crc(bits)
     bits += f"{crc:015b}"
-    
     # Bit stuffing
     stuffed = bit_stuff(bits)
     
@@ -51,7 +44,8 @@ def frame_to_bits(id, payload):
     return stuffed + ['1']*3 + ['1']*7  # CRC delim + ACK + EOF
 
 def plot(df, signal_start, signal_end, can_frame, path):
-        can_id = int(can_frame.split(":")[0][3:],base=16)
+        can_id = can_frame.split(":")[0][3:]
+        can_id = int(can_id,base=16)
         can_payload = bytes.fromhex(can_frame.split(":")[1])
         can_bits = frame_to_bits(can_id, can_payload)
         bitsstring = "".join(can_bits)
@@ -60,7 +54,7 @@ def plot(df, signal_start, signal_end, can_frame, path):
         plt.title(f"0x{can_id:x} {can_payload.hex()}\n {bitsstring}")
         plt.xlabel("Time [ms]")
         plt.ylabel("A [dB]")
-        plt.savefig("plots/" + path[:-3] + "png")
+        plt.savefig(f"/home/thomas/projects/papers/2025-acsw/can-bus-sdr/thomas/software_defined_radio/plots/csv/bitsuffing/0x{can_id:x}:{can_payload.hex()}.png")
         plt.close()
         del(fig)
 
@@ -110,7 +104,7 @@ for path in paths:
 
         plot(df, signal_start, signal_end, can_frame, path)
         export_df = pd.concat([can_frame_df,df.iloc[signal_start:signal_end]])
-        export_df.to_csv("cut/" + path, index=False)
+        # export_df.to_csv("cut/" + path, index=False)
         
     else:
         print("No signal detected above the threshold.")
