@@ -1,9 +1,8 @@
 import pandas as pd
 import sys
-import os
-import time
 import numpy as np
 import matplotlib.pyplot as plt
+import crc
 
 if len(sys.argv) != 2:
     print("Usage: python cutprocess_logic_analyser_csv.py <CSV>")
@@ -65,11 +64,28 @@ for i,frame in enumerate(frames):
         new_values.append(values[j])
         new_timestamps.append(timestamps[j])
 
-    fig = plt.figure(figsize=(16,12))
+    bits = ""
+    for j in range(1,len(new_values)):
+        bit = str(new_values[j-1])
+        duration = new_timestamps[j] - new_timestamps[j-1]
+        bit_duration = round(duration / (2 * 1e-6))
+        bits += bit * bit_duration
+
+    can_id = int(can_frames[i].split(":")[0],base=16)
+    can_payload  = bytes.fromhex(can_frames[i].split(":")[1])
+    synth_bits = crc.frame_to_bits(can_id, can_payload)
+
+    # Cut off the EOF and IFS of the synthesized bits to match the measurement
+    synth_bits = synth_bits[:-11]
+
+    # Cut off the first 23 bits of the measured CAN signal as they are weird
+    bits = bits[23:]
+
+    fig = plt.figure(figsize=(18,12))
     plt.plot( new_timestamps, new_values,)
     plt.xlabel("Time [s]")
     plt.ylabel("Logic Value")
-    plt.title(can_frames[i])
+    plt.title(can_frames[i] + "\n" + bits + "\n" + synth_bits)
     path = f"plots/logic/{can_frames[i]}.png"
     plt.savefig(path)
     plt.close()

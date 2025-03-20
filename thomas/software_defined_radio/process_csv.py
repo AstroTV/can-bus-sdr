@@ -24,8 +24,6 @@ def main():
          filenames = [sys.argv[1] + "/" + file for file in os.listdir(sys.argv[1]) if file.endswith(".csv")]
     elif sys.argv[1].endswith(".csv"):
         filenames = sys.argv[1]
-
-    print(filenames)
     
     for filename in filenames:
         ds = pd.read_csv(filename,delimiter=';', skiprows=[0])

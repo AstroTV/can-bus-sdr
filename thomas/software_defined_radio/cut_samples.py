@@ -41,7 +41,7 @@ def frame_to_bits(id, payload):
     stuffed = bit_stuff(bits)
     
     # Frame end components
-    return stuffed + ['1']*3 + ['1']*7  # CRC delim + ACK + EOF
+    return stuffed + ['1'] + ['0'] + ['1'] + ['1']*7 + ['1']*3  # CRC delim + ACK + EOF + IFS
 
 def plot(df, signal_start, signal_end, can_frame, path):
         can_id = can_frame.split(":")[0][3:]

@@ -22,15 +22,13 @@ for path in paths:
     # Get the CAN Frame from the first row of the CSV file
     can_frame_df = pd.read_csv(path, nrows=0)
     can_frame = can_frame_df.columns[1]
-    print(can_frame)
-    continue
+
     with can.Bus(interface='socketcan', channel='can0',) as bus:
         id = int(can_frame.split(":")[0][3:],base=16)
         payload = bytes.fromhex(can_frame.split(":")[1])
-        msg = can.Message(arbitration_id=id, data=payload)
+        msg = can.Message(arbitration_id=id, data=payload, is_extended_id=False)
         try:
             bus.send(msg)
-            print(f"Message sent on {bus.channel_info}")
 
         except can.CanError:
             print("Message NOT sent")
