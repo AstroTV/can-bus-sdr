@@ -15,6 +15,12 @@ def plot(values, time_axis, filename, show=False):
     plt.clf()
     plt.close()
 
+def export(values, time_axis, filename):
+     with open(filename, "w") as file:
+          file.write("Timestamp;Amplitude\n")
+          for i in range(len(values)):
+               file.write(f"{time_axis[i]};{values[i]}\n")
+
 def main():
     if len(sys.argv) != 2:# or not sys.argv[1].endswith(".csv"):
         print("Usage: python process_csv.py <example.csv>")
@@ -55,6 +61,7 @@ def main():
                    start = start_of_frame_indices[i]-20
                    stop = end_of_frame_indices[i]+20
                    plot(values[start:stop],timestamps[start:stop], f"frame-{i}.png")
+                   export(values[start:stop],timestamps[start:stop], f"frame-{i}.csv")
 
 if __name__ == "__main__":
     main()

@@ -74,7 +74,7 @@ for path in paths:
 
     # Get the CAN Frame from the first row of the CSV file
     can_frame_df = pd.read_csv(path, delimiter=";", nrows=0)
-    can_frame = can_frame_df.columns[1]
+    can_frame = can_frame_df.columns[1].strip()
 
 
     # Load the data from CSV file
@@ -104,7 +104,7 @@ for path in paths:
 
         plot(df, signal_start, signal_end, can_frame, path)
         export_df = pd.concat([can_frame_df,df.iloc[signal_start:signal_end]])
-        # export_df.to_csv("cut/" + path, index=False)
+        export_df.to_csv("cut/" + path, index=False)
         
     else:
         print("No signal detected above the threshold.")
